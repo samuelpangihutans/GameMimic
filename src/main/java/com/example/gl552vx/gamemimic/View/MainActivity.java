@@ -1,7 +1,10 @@
-package com.example.gl552vx.gamemimic;
+package com.example.gl552vx.gamemimic.View;
 
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+
+import androidx.appcompat.app.AppCompatActivity;
+
+import com.example.gl552vx.gamemimic.R;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -10,4 +13,6 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
     }
+
+
 }
