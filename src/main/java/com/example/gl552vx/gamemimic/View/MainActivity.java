@@ -1,7 +1,9 @@
-package com.example.gl552vx.gamemimic;
+package com.example.gl552vx.gamemimic.View;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+
+import com.example.gl552vx.gamemimic.R;
 
 public class MainActivity extends AppCompatActivity {
 
