@@ -4,6 +4,7 @@ import android.Manifest;
 import android.Manifest.permission;
 import android.app.Activity;
 import android.app.AliasActivity;
+import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
@@ -61,6 +62,7 @@ public class CameraModel {
     private ImageReader imageReader;
     private static final int REQUEST_CAMERA_PERMISSION = 200;
     private File file;
+
     private final CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
         @Override
         public void onOpened(@NonNull CameraDevice cameraDevice) {
@@ -130,8 +132,8 @@ public class CameraModel {
                 if(characteristics != null){
                     jpegSize = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.JPEG);
                 }
-                int width = 640;
-                int height = 480;
+                int width = 480;
+                int height = 640;
 
                 if(jpegSize != null && 0 < jpegSize.length){
                     width = jpegSize[0].getWidth();
@@ -145,8 +147,12 @@ public class CameraModel {
                 outputSurfaces.add(new Surface(textureView.getSurfaceTexture()));
                 final CaptureRequest.Builder captureBuilder = mDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
                 captureBuilder.addTarget(reader.getSurface());
-                captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
-
+                //captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+                captureBuilder.set(
+                        CaptureRequest.JPEG_ORIENTATION,
+                       270);
+               // activity.getWindowManager().getDefaultDisplay().getRotation();
+               // sensorOrientation =  characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
                 file = new File(Environment.getExternalStorageDirectory()+"/pic.jpg");
                 ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
                     @Override
@@ -286,6 +292,24 @@ public class CameraModel {
             imageReader.close();
             imageReader = null;
         }
+    }
+
+    private int getJpegOrientation(CameraCharacteristics c, int deviceOrientation) {
+        if (deviceOrientation == android.view.OrientationEventListener.ORIENTATION_UNKNOWN) return 0;
+        int sensorOrientation = c.get(CameraCharacteristics.SENSOR_ORIENTATION);
+
+        // Round device orientation to a multiple of 90
+        deviceOrientation = (deviceOrientation + 45) / 90 * 90;
+
+        // Reverse device orientation for front-facing cameras
+        boolean facingFront = c.get(CameraCharacteristics.LENS_FACING) == CameraCharacteristics.LENS_FACING_FRONT;
+        if (facingFront) deviceOrientation = -deviceOrientation;
+
+        // Calculate desired JPEG orientation relative to camera orientation to make
+        // the image upright relative to the device orientation
+        int jpegOrientation = (sensorOrientation + deviceOrientation + 360) % 360;
+
+        return jpegOrientation;
     }
 
 }
