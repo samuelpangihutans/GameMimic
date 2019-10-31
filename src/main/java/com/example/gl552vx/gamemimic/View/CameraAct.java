@@ -52,10 +52,11 @@ public class CameraAct extends AppCompatActivity implements View.OnClickListener
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
-        camModel = new CameraModel(this, this.textureView);
+
         this.btnCapture = findViewById(R.id.btn_capture);
         this.btnCapture.setOnClickListener(this);
         this.textureView = findViewById(R.id.textureView);
+        camModel = new CameraModel(this, this.textureView);
 
     }
 

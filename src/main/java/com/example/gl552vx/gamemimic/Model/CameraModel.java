@@ -147,7 +147,7 @@ public class CameraModel {
                 captureBuilder.addTarget(reader.getSurface());
                 captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
 
-                final File file = new File(Environment.getExternalStorageDirectory()+"/pic.jpg");
+                file = new File(Environment.getExternalStorageDirectory()+"/pic.jpg");
                 ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
                     @Override
                     public void onImageAvailable(ImageReader imageReader) {
