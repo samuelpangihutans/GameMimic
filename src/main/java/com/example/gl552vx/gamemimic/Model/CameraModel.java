@@ -51,6 +51,7 @@ import java.util.List;
 
 public class CameraModel {
 
+
     private Activity activity;
     private CameraDevice mDevice;
     private CameraCaptureSession mCaptureSess;
@@ -154,6 +155,7 @@ public class CameraModel {
                // activity.getWindowManager().getDefaultDisplay().getRotation();
                // sensorOrientation =  characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
                 file = new File(Environment.getExternalStorageDirectory()+"/pic.jpg");
+
                 ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
                     @Override
                     public void onImageAvailable(ImageReader imageReader) {
@@ -164,6 +166,18 @@ public class CameraModel {
                             byte[] bytes = new byte[buffer.capacity()];
                             buffer.get(bytes);
                             save(bytes);
+
+                            GameManager gm = new GameManager();
+                            gm.detectEmotion(bytes);
+
+                            while(gm.emotionRes == null){
+
+                                Log.d("ABC","null");
+                            }
+                            Log.d("RESULT",gm.getResult("happiness")+" asfasfas");
+
+
+
                         } catch (FileNotFoundException e) {
                             e.printStackTrace();
                         } catch (IOException e) {
