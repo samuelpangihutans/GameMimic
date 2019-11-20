@@ -19,6 +19,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
@@ -36,13 +37,18 @@ import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 
 import com.example.gl552vx.gamemimic.View.MainActivity;
+import com.microsoft.projectoxford.face.FaceServiceClient;
+import com.microsoft.projectoxford.face.FaceServiceRestClient;
+import com.microsoft.projectoxford.face.contract.Face;
 
 import org.w3c.dom.Text;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -62,6 +68,13 @@ public class CameraModel {
     private Size imageDimension;
     private ImageReader imageReader;
     private static final int REQUEST_CAMERA_PERMISSION = 200;
+    // Add your Face endpoint to your environment variables.
+    private final String apiEndpoint = "https://pascalfaceapisandbox.cognitiveservices.azure.com/face/v1.0/detect";
+    // Add your Face subscription key to your environment variables.
+    private final String subscriptionKey = "85d799141b4746d6827f4ffd52db6375";
+    private Face[] emotionRes;
+
+    private final FaceServiceClient faceServiceClient = new FaceServiceRestClient(apiEndpoint,subscriptionKey);
     private File file;
 
     private final CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
@@ -167,15 +180,16 @@ public class CameraModel {
                             buffer.get(bytes);
                             save(bytes);
 
-                            GameManager gm = new GameManager();
-                            gm.detectEmotion(bytes);
-
-                            while(gm.emotionRes == null){
+                            //GameManager gm = new GameManager();
+                            //gm.detectEmotion(bytes);
+                            detectEmotion(bytes);
+                            while(emotionRes == null){
 
                                 Log.d("ABC","null");
                             }
-                            Log.d("RESULT",gm.getResult("happiness")+" asfasfas");
 
+                            Log.d("RESULT",getResult("happiness")+" asfasfas");
+                            Toast.makeText(activity,getResult("happiness")+" asfasfas", Toast.LENGTH_LONG ).show();
 
 
                         } catch (FileNotFoundException e) {
@@ -324,6 +338,100 @@ public class CameraModel {
         int jpegOrientation = (sensorOrientation + deviceOrientation + 360) % 360;
 
         return jpegOrientation;
+    }
+
+
+    public void detectEmotion(byte[]arr) {
+
+        final ByteArrayInputStream inputStream =
+                new ByteArrayInputStream(arr);
+
+        AsyncTask<InputStream,String, Face[]> faceThread = new AsyncTask<InputStream, String, Face[]>() {
+            String exception ="Something went wrong!";
+
+            @Override
+            protected Face[] doInBackground(InputStream... inputStreams) {
+                try {
+                    publishProgress("Detecting...");
+                    Face[] result = faceServiceClient.detect(
+                            inputStreams[0],
+                            true,         // returnFaceId
+                            false,        // returnFaceLandmarks
+                            new FaceServiceClient.FaceAttributeType[]{FaceServiceRestClient.FaceAttributeType.Emotion}
+                            // returnFaceAttributes:
+                                /* new FaceServiceClient.FaceAttributeType[] {
+                                    FaceServiceClient.FaceAttributeType.Age,
+                                    FaceServiceClient.FaceAttributeType.Gender }
+                                */
+
+                    );
+                    if (result == null){
+                        publishProgress(
+                                "Detection Finished. Nothing detected");
+                        return null;
+                    }
+                    publishProgress(String.format(
+                            "Detection Finished. %d face(s) detected",
+                            result.length));
+                    return result;
+                } catch (Exception e) {
+                    exception = String.format(
+                            "Detection failed: %s", e.getMessage());
+                    return null;
+                }
+            }
+
+            @Override
+            protected void onPostExecute(Face[] result) {
+                //TODO: update face frames
+                emotionRes = result;
+               createCameraPreview();
+            }
+
+
+        };
+//           faceServiceClient.detect(
+//                    inputStream,
+//                    false,         // returnFaceId
+//                    false,        // returnFaceLandmarks
+//                    new FaceServiceClient.FaceAttributeType[]{FaceServiceRestClient.FaceAttributeType.Emotion}          // returnFaceAttributes:
+//                                    /* new FaceServiceClient.FaceAttributeType[] {
+//                                        FaceServiceClient.FaceAttributeType.Age,
+//                                        FaceServiceClient.FaceAttributeType.Gender }
+//                                    */
+//            );
+//            if (result == null) return;
+//
+//            Log.d("FaceAtr","abcdefg "+result[0].faceAttributes.emotion.anger+" "+result[0].faceAttributes.emotion.surprise + " " +
+//                    result[0].faceAttributes.emotion.happiness+" "+result[0].faceAttributes.emotion.fear +" "
+//                    +result[0].faceAttributes.emotion.disgust);
+//
+//            emotionRes = result;
+//        } catch (ClientException e) {
+//            e.printStackTrace();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
+        faceThread.execute();
+
+    }
+
+    public double getResult(String entry){
+        if(this.emotionRes == null){
+            return -1;
+        }
+        if(entry.equalsIgnoreCase("happiness")){
+            return this.emotionRes[0].faceAttributes.emotion.happiness;
+        } else if(entry.equalsIgnoreCase("anger")){
+            return this.emotionRes[0].faceAttributes.emotion.anger;
+        }else if(entry.equalsIgnoreCase("surprise")){
+            return this.emotionRes[0].faceAttributes.emotion.surprise;
+        } else if(entry.equalsIgnoreCase("fear")){
+            return this.emotionRes[0].faceAttributes.emotion.fear;
+        } else if(entry.equalsIgnoreCase("disgust")){
+            return this.emotionRes[0].faceAttributes.emotion.disgust;
+        }
+        return -1;
     }
 
 }

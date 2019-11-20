@@ -107,4 +107,6 @@ public class CameraAct extends AppCompatActivity implements View.OnClickListener
         this.camModel.takePicture();
 
     }
+
+
 }
