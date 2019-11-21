@@ -19,7 +19,7 @@ android {
     sourceSets{
         main{
             manifest.srcFile{
-                'C:/Users/gabri/Documents/GameMimic/app/src//main/AndroidManifest.xml'
+                'C:/Users/Ifunk/Desktop/MATKUL SEMS 7/LBW/GameLBW/app/src/main/AndroidManifest.xml'
             }
         }
     }

@@ -6,6 +6,8 @@ import android.app.Activity;
 import android.app.AliasActivity;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -19,11 +21,13 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.util.Base64;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -44,12 +48,14 @@ import com.microsoft.projectoxford.face.contract.Face;
 import org.w3c.dom.Text;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -69,9 +75,10 @@ public class CameraModel {
     private ImageReader imageReader;
     private static final int REQUEST_CAMERA_PERMISSION = 200;
     // Add your Face endpoint to your environment variables.
-    private final String apiEndpoint = "https://pascalfaceapisandbox.cognitiveservices.azure.com/face/v1.0/detect";
+    private final String apiEndpoint = "https://westcentralus.api.cognitive.microsoft.com/face/v1.0/";
+//            "https://pascalfaceapisandbox.cognitiveservices.azure.com/face/v1.0/";
     // Add your Face subscription key to your environment variables.
-    private final String subscriptionKey = "85d799141b4746d6827f4ffd52db6375";
+    private final String subscriptionKey = "d8587d3195104833b9d48008f8770a52";
     private Face[] emotionRes;
 
     private final FaceServiceClient faceServiceClient = new FaceServiceRestClient(apiEndpoint,subscriptionKey);
@@ -161,10 +168,10 @@ public class CameraModel {
                 outputSurfaces.add(new Surface(textureView.getSurfaceTexture()));
                 final CaptureRequest.Builder captureBuilder = mDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
                 captureBuilder.addTarget(reader.getSurface());
-                //captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
-                captureBuilder.set(
-                        CaptureRequest.JPEG_ORIENTATION,
-                       270);
+                captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+//                captureBuilder.set(
+//                        CaptureRequest.JPEG_ORIENTATION,
+//                       0);
                // activity.getWindowManager().getDefaultDisplay().getRotation();
                // sensorOrientation =  characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
                 file = new File(Environment.getExternalStorageDirectory()+"/pic.jpg");
@@ -176,20 +183,22 @@ public class CameraModel {
                         try {
                             image = reader.acquireLatestImage();
                             ByteBuffer buffer = image.getPlanes()[0].getBuffer();
+
                             byte[] bytes = new byte[buffer.capacity()];
+                            Log.d("D",bytes.length+" ");
                             buffer.get(bytes);
                             save(bytes);
 
                             //GameManager gm = new GameManager();
                             //gm.detectEmotion(bytes);
                             detectEmotion(bytes);
-                            while(emotionRes == null){
+//                            while(emotionRes == null){
+//
+//                                Log.d("ABC","null");
+//                            }
 
-                                Log.d("ABC","null");
-                            }
+//                            Log.d("RESULT",getResult("happiness")+" asfasfas");
 
-                            Log.d("RESULT",getResult("happiness")+" asfasfas");
-                            Toast.makeText(activity,getResult("happiness")+" asfasfas", Toast.LENGTH_LONG ).show();
 
 
                         } catch (FileNotFoundException e) {
@@ -204,6 +213,8 @@ public class CameraModel {
                     }
 
                     private void save(byte[] bytes) throws IOException {
+
+
                         OutputStream output = null;
                         try {
                             output = new FileOutputStream(file);
@@ -342,9 +353,16 @@ public class CameraModel {
 
 
     public void detectEmotion(byte[]arr) {
-
-        final ByteArrayInputStream inputStream =
+        Log.d("D","1");
+        final ByteArrayInputStream inputStream1 =
                 new ByteArrayInputStream(arr);
+
+
+        Bitmap imageBitmap = BitmapFactory.decodeByteArray(arr,0,arr.length);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+        ByteArrayInputStream inputStream2 =
+                new ByteArrayInputStream(outputStream.toByteArray());
 
         AsyncTask<InputStream,String, Face[]> faceThread = new AsyncTask<InputStream, String, Face[]>() {
             String exception ="Something went wrong!";
@@ -352,11 +370,13 @@ public class CameraModel {
             @Override
             protected Face[] doInBackground(InputStream... inputStreams) {
                 try {
+                    Log.d("D","2");
                     publishProgress("Detecting...");
+                    Log.d("D","2.1");
                     Face[] result = faceServiceClient.detect(
                             inputStreams[0],
                             true,         // returnFaceId
-                            false,        // returnFaceLandmarks
+                            true,        // returnFaceLandmarks
                             new FaceServiceClient.FaceAttributeType[]{FaceServiceRestClient.FaceAttributeType.Emotion}
                             // returnFaceAttributes:
                                 /* new FaceServiceClient.FaceAttributeType[] {
@@ -365,27 +385,40 @@ public class CameraModel {
                                 */
 
                     );
+                    Log.d("D","2.2");
                     if (result == null){
+                        Log.d("D","3");
                         publishProgress(
+
                                 "Detection Finished. Nothing detected");
                         return null;
                     }
+
+                    Log.d("D","4");
                     publishProgress(String.format(
                             "Detection Finished. %d face(s) detected",
                             result.length));
+                    emotionRes = result;
                     return result;
                 } catch (Exception e) {
+                    Log.d("D","5");
                     exception = String.format(
                             "Detection failed: %s", e.getMessage());
-                    return null;
+                    throw new RuntimeException(e);
+//                    return null;
                 }
             }
 
+            @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
             protected void onPostExecute(Face[] result) {
+                Log.d("D","6");
                 //TODO: update face frames
-                emotionRes = result;
-               createCameraPreview();
+                Toast.makeText(activity,getResult("happiness")+" asfasfas", Toast.LENGTH_LONG ).show();
+//                emotionRes = result;
+                closeCamera();
+                openCamera();
+               //createCameraPreview();
             }
 
 
@@ -412,16 +445,26 @@ public class CameraModel {
 //        } catch (IOException e) {
 //            e.printStackTrace();
 //        }
-        faceThread.execute();
+        faceThread.execute(inputStream2);
 
     }
 
     public double getResult(String entry){
         if(this.emotionRes == null){
+            Log.d("D",emotionRes.length+"");
+            for(int i = 0 ; i< emotionRes.length;i++){
+                Log.d("D",emotionRes[i].toString());
+            }
+
             return -1;
         }
         if(entry.equalsIgnoreCase("happiness")){
+            Log.d("D",emotionRes.length+" asd");
+            for(int i = 0 ; i< emotionRes.length;i++){
+                Log.d("D",emotionRes[i].toString() +" asd");
+            }
             return this.emotionRes[0].faceAttributes.emotion.happiness;
+
         } else if(entry.equalsIgnoreCase("anger")){
             return this.emotionRes[0].faceAttributes.emotion.anger;
         }else if(entry.equalsIgnoreCase("surprise")){
