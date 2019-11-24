@@ -76,13 +76,12 @@ public class CameraModel {
     private ImageReader imageReader;
     private static final int REQUEST_CAMERA_PERMISSION = 200;
     // Add your Face endpoint to your environment variables.
-    //southeastasia.api.cognitive.microsoft.com
-    //pascalfaceapisandbox.cognitiveservices.azure.com
     private final String apiEndpoint = "https://westcentralus.api.cognitive.microsoft.com/face/v1.0/";
+//            "https://pascalfaceapisandbox.cognitiveservices.azure.com/face/v1.0/";
     // Add your Face subscription key to your environment variables.
-    private final String subscriptionKey = "48c19bfc4ddb4e29abb2b565fdd3cc6f";
+    private final String subscriptionKey = "d8587d3195104833b9d48008f8770a52";
     private Face[] emotionRes;
-    private ProgressDialog detecProgressDialog;
+
     private final FaceServiceClient faceServiceClient = new FaceServiceRestClient(apiEndpoint,subscriptionKey);
     private File file;
 
@@ -110,7 +109,6 @@ public class CameraModel {
     public CameraModel(Activity activity, TextureView textureView){
         this.activity = activity;
         this.textureView = textureView;
-        this.detecProgressDialog = new ProgressDialog(activity);
     }
 
     public CameraDevice getmDevice() {
@@ -353,26 +351,31 @@ public class CameraModel {
     }
 
 
-    public void detectEmotion(final Bitmap bmap) {
-        //byte encodedArr = Base64.encode;
-        //Bitmap imageBitmap = BitmapFactory.decodeByteArray(arr,0,arr.length);
+    public void detectEmotion(byte[]arr) {
+        Log.d("D","1");
+        final ByteArrayInputStream inputStream1 =
+                new ByteArrayInputStream(arr);
+
+
+        Bitmap imageBitmap = BitmapFactory.decodeByteArray(arr,0,arr.length);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        bmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
-        ByteArrayInputStream inputStreams =
+        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+        ByteArrayInputStream inputStream2 =
                 new ByteArrayInputStream(outputStream.toByteArray());
 
         AsyncTask<InputStream,String, Face[]> faceThread = new AsyncTask<InputStream, String, Face[]>() {
             String exception ="Something went wrong!";
 
             @Override
-            protected Face[] doInBackground(InputStream... inputStream) {
+            protected Face[] doInBackground(InputStream... inputStreams) {
                 try {
+                    Log.d("D","2");
                     publishProgress("Detecting...");
-                    Log.d("byte", inputStream[0].read()+"");
+                    Log.d("D","2.1");
                     Face[] result = faceServiceClient.detect(
-                            inputStream[0],
+                            inputStreams[0],
                             true,         // returnFaceId
-                            false,        // returnFaceLandmarks
+                            true,        // returnFaceLandmarks
                             new FaceServiceClient.FaceAttributeType[]{FaceServiceRestClient.FaceAttributeType.Emotion}
                             // returnFaceAttributes:
                                 /* new FaceServiceClient.FaceAttributeType[] {
@@ -381,49 +384,39 @@ public class CameraModel {
                                 */
 
                     );
-                    Log.d("d","Detecting..");
+                    Log.d("D","2.2");
                     if (result == null){
+                        Log.d("D","3");
                         publishProgress(
+
                                 "Detection Finished. Nothing detected");
                         return null;
                     }
+
+                    Log.d("D","4");
                     publishProgress(String.format(
                             "Detection Finished. %d face(s) detected",
                             result.length));
+                    emotionRes = result;
                     return result;
                 } catch (Exception e) {
+                    Log.d("D","5");
                     exception = String.format(
                             "Detection failed: %s", e.getMessage());
-                    //Toast.makeText(activity, exception, Toast.LENGTH_LONG);
-                    //throw new RuntimeException(e);
-                    return null;
+                    throw new RuntimeException(e);
+//                    return null;
                 }
             }
-
-//            @Override
-//            protected void onPreExecute() {
-//                //TODO: show progress dialog
-//                detecProgressDialog.show();
-//            }
-//            @Override
-//            protected void onProgressUpdate(String... progress) {
-//                //TODO: update progress
-//                detecProgressDialog.setMessage(progress[0]);
-//            }
 
             @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
             protected void onPostExecute(Face[] result) {
+                Log.d("D","6");
                 //TODO: update face frames
-                detecProgressDialog.dismiss();
-                if(!exception.equals("")){
-                    showError(exception);
-                }
-                if (result == null) return;
-                emotionRes = result;
+                Toast.makeText(activity,getResult("happiness")+" asfasfas", Toast.LENGTH_LONG ).show();
+//                emotionRes = result;
                 closeCamera();
                 openCamera();
-                Toast.makeText(activity,getResult("happiness")+" asfasfas", Toast.LENGTH_LONG ).show();
                //createCameraPreview();
             }
 
@@ -451,26 +444,26 @@ public class CameraModel {
 //        } catch (IOException e) {
 //            e.printStackTrace();
 //        }
-        faceThread.execute(inputStreams);
+        faceThread.execute(inputStream2);
 
-    }
-
-    private void showError(String message) {
-        new AlertDialog.Builder(activity)
-                .setTitle("Error")
-                .setMessage(message)
-                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                    }})
-                .create().show();
     }
 
     public double getResult(String entry){
         if(this.emotionRes == null){
+            Log.d("D",emotionRes.length+"");
+            for(int i = 0 ; i< emotionRes.length;i++){
+                Log.d("D",emotionRes[i].toString());
+            }
+
             return -1;
         }
         if(entry.equalsIgnoreCase("happiness")){
+            Log.d("D",emotionRes.length+" asd");
+            for(int i = 0 ; i< emotionRes.length;i++){
+                Log.d("D",emotionRes[i].toString() +" asd");
+            }
             return this.emotionRes[0].faceAttributes.emotion.happiness;
+
         } else if(entry.equalsIgnoreCase("anger")){
             return this.emotionRes[0].faceAttributes.emotion.anger;
         }else if(entry.equalsIgnoreCase("surprise")){
