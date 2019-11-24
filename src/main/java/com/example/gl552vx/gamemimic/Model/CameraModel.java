@@ -82,6 +82,7 @@ public class CameraModel {
     private final String subscriptionKey = "d8587d3195104833b9d48008f8770a52";
     private Face[] emotionRes;
 
+    private ProgressDialog detectionProgressDialog;
     private final FaceServiceClient faceServiceClient = new FaceServiceRestClient(apiEndpoint,subscriptionKey);
     private File file;
 
@@ -109,6 +110,7 @@ public class CameraModel {
     public CameraModel(Activity activity, TextureView textureView){
         this.activity = activity;
         this.textureView = textureView;
+        detectionProgressDialog = new ProgressDialog(activity);
     }
 
     public CameraDevice getmDevice() {
@@ -404,8 +406,19 @@ public class CameraModel {
                     exception = String.format(
                             "Detection failed: %s", e.getMessage());
                     throw new RuntimeException(e);
-//                    return null;
+                    //return null;
                 }
+            }
+
+            @Override
+            protected void onPreExecute() {
+                //TODO: show progress dialog
+                detectionProgressDialog.show();
+            }
+            @Override
+            protected void onProgressUpdate(String... progress) {
+                //TODO: update progress
+                detectionProgressDialog.setMessage(progress[0]);
             }
 
             @RequiresApi(api = Build.VERSION_CODES.M)
