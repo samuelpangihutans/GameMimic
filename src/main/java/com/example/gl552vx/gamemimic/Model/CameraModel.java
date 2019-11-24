@@ -198,7 +198,7 @@ public class CameraModel {
 //                                Log.d("ABC","null");
 //                            }
 
-                            Log.d("RESULT",getResult("happiness")+" asfasfas");
+//                            Log.d("RESULT",getResult("happiness")+" asfasfas");
 
 
 
@@ -351,15 +351,15 @@ public class CameraModel {
     }
 
 
-    public void detectEmotion(byte[]arr) {
+    public void detectEmotion(Bitmap bmap) {
         Log.d("D","1");
-        final ByteArrayInputStream inputStream1 =
-                new ByteArrayInputStream(arr);
+//        final ByteArrayInputStream inputStream1 =
+//                new ByteArrayInputStream(arr);
 
 
-        Bitmap imageBitmap = BitmapFactory.decodeByteArray(arr,0,arr.length);
+        //Bitmap imageBitmap = BitmapFactory.decodeByteArray(arr,0,arr.length);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+        bmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
         ByteArrayInputStream inputStream2 =
                 new ByteArrayInputStream(outputStream.toByteArray());
 
@@ -422,28 +422,6 @@ public class CameraModel {
 
 
         };
-//           faceServiceClient.detect(
-//                    inputStream,
-//                    false,         // returnFaceId
-//                    false,        // returnFaceLandmarks
-//                    new FaceServiceClient.FaceAttributeType[]{FaceServiceRestClient.FaceAttributeType.Emotion}          // returnFaceAttributes:
-//                                    /* new FaceServiceClient.FaceAttributeType[] {
-//                                        FaceServiceClient.FaceAttributeType.Age,
-//                                        FaceServiceClient.FaceAttributeType.Gender }
-//                                    */
-//            );
-//            if (result == null) return;
-//
-//            Log.d("FaceAtr","abcdefg "+result[0].faceAttributes.emotion.anger+" "+result[0].faceAttributes.emotion.surprise + " " +
-//                    result[0].faceAttributes.emotion.happiness+" "+result[0].faceAttributes.emotion.fear +" "
-//                    +result[0].faceAttributes.emotion.disgust);
-//
-//            emotionRes = result;
-//        } catch (ClientException e) {
-//            e.printStackTrace();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
         faceThread.execute(inputStream2);
 
     }

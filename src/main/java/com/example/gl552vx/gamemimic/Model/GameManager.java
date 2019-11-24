@@ -32,20 +32,21 @@ public class GameManager {
 
     public Face [] emotionRes;
 
-    public void detectEmotion(byte[]arr) {
-
-        final ByteArrayInputStream inputStream =
-                new ByteArrayInputStream(arr);
+    public void detectEmotion(Bitmap bmap) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        bmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+        final ByteArrayInputStream inputStreams =
+                new ByteArrayInputStream(outputStream.toByteArray());
 
            AsyncTask<InputStream,String,Face[]>  faceThread = new AsyncTask<InputStream, String, Face[]>() {
                String exception ="Something went wrong!";
 
                @Override
-               protected Face[] doInBackground(InputStream... inputStreams) {
+               protected Face[] doInBackground(InputStream... par) {
                    try {
                        publishProgress("Detecting...");
                        Face[] result = faceServiceClient.detect(
-                               inputStreams[0],
+                               par[0],
                                true,         // returnFaceId
                                false,        // returnFaceLandmarks
                                new FaceServiceClient.FaceAttributeType[]{FaceServiceRestClient.FaceAttributeType.Emotion}
@@ -95,7 +96,7 @@ public class GameManager {
 //        } catch (IOException e) {
 //            e.printStackTrace();
 //        }
-        faceThread.execute();
+        faceThread.execute(inputStreams);
 
     }
 
