@@ -3,9 +3,14 @@ package com.example.gl552vx.gamemimic.Model;
 import android.Manifest;
 import android.Manifest.permission;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.AliasActivity;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -24,6 +29,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.util.Base64;
 import android.util.Log;
 import android.util.Size;
 import android.view.Surface;
@@ -44,6 +50,7 @@ import com.microsoft.projectoxford.face.contract.Face;
 import org.w3c.dom.Text;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -69,11 +76,13 @@ public class CameraModel {
     private ImageReader imageReader;
     private static final int REQUEST_CAMERA_PERMISSION = 200;
     // Add your Face endpoint to your environment variables.
-    private final String apiEndpoint = "https://pascalfaceapisandbox.cognitiveservices.azure.com/face/v1.0/detect";
+    //southeastasia.api.cognitive.microsoft.com
+    //pascalfaceapisandbox.cognitiveservices.azure.com
+    private final String apiEndpoint = "https://westcentralus.api.cognitive.microsoft.com/face/v1.0/";
     // Add your Face subscription key to your environment variables.
-    private final String subscriptionKey = "85d799141b4746d6827f4ffd52db6375";
+    private final String subscriptionKey = "48c19bfc4ddb4e29abb2b565fdd3cc6f";
     private Face[] emotionRes;
-
+    private ProgressDialog detecProgressDialog;
     private final FaceServiceClient faceServiceClient = new FaceServiceRestClient(apiEndpoint,subscriptionKey);
     private File file;
 
@@ -101,6 +110,7 @@ public class CameraModel {
     public CameraModel(Activity activity, TextureView textureView){
         this.activity = activity;
         this.textureView = textureView;
+        this.detecProgressDialog = new ProgressDialog(activity);
     }
 
     public CameraDevice getmDevice() {
@@ -161,10 +171,10 @@ public class CameraModel {
                 outputSurfaces.add(new Surface(textureView.getSurfaceTexture()));
                 final CaptureRequest.Builder captureBuilder = mDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
                 captureBuilder.addTarget(reader.getSurface());
-                //captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
-                captureBuilder.set(
-                        CaptureRequest.JPEG_ORIENTATION,
-                       270);
+                captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+//                captureBuilder.set(
+//                        CaptureRequest.JPEG_ORIENTATION,
+//                       270);
                // activity.getWindowManager().getDefaultDisplay().getRotation();
                // sensorOrientation =  characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
                 file = new File(Environment.getExternalStorageDirectory()+"/pic.jpg");
@@ -177,19 +187,21 @@ public class CameraModel {
                             image = reader.acquireLatestImage();
                             ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                             byte[] bytes = new byte[buffer.capacity()];
+                            Log.d("byte", bytes.length+"");
                             buffer.get(bytes);
                             save(bytes);
-
+                            File root = Environment.getExternalStorageDirectory();
+                            Bitmap bmap = BitmapFactory.decodeFile(root+"/pic.jpg");
                             //GameManager gm = new GameManager();
                             //gm.detectEmotion(bytes);
-                            detectEmotion(bytes);
-                            while(emotionRes == null){
-
-                                Log.d("ABC","null");
-                            }
+                            detectEmotion(bmap);
+//                            while(emotionRes == null){
+//
+//                                Log.d("ABC","null");
+//                            }
 
                             Log.d("RESULT",getResult("happiness")+" asfasfas");
-                            Toast.makeText(activity,getResult("happiness")+" asfasfas", Toast.LENGTH_LONG ).show();
+
 
 
                         } catch (FileNotFoundException e) {
@@ -341,20 +353,24 @@ public class CameraModel {
     }
 
 
-    public void detectEmotion(byte[]arr) {
-
-        final ByteArrayInputStream inputStream =
-                new ByteArrayInputStream(arr);
+    public void detectEmotion(final Bitmap bmap) {
+        //byte encodedArr = Base64.encode;
+        //Bitmap imageBitmap = BitmapFactory.decodeByteArray(arr,0,arr.length);
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        bmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+        ByteArrayInputStream inputStreams =
+                new ByteArrayInputStream(outputStream.toByteArray());
 
         AsyncTask<InputStream,String, Face[]> faceThread = new AsyncTask<InputStream, String, Face[]>() {
             String exception ="Something went wrong!";
 
             @Override
-            protected Face[] doInBackground(InputStream... inputStreams) {
+            protected Face[] doInBackground(InputStream... inputStream) {
                 try {
                     publishProgress("Detecting...");
+                    Log.d("byte", inputStream[0].read()+"");
                     Face[] result = faceServiceClient.detect(
-                            inputStreams[0],
+                            inputStream[0],
                             true,         // returnFaceId
                             false,        // returnFaceLandmarks
                             new FaceServiceClient.FaceAttributeType[]{FaceServiceRestClient.FaceAttributeType.Emotion}
@@ -365,6 +381,7 @@ public class CameraModel {
                                 */
 
                     );
+                    Log.d("d","Detecting..");
                     if (result == null){
                         publishProgress(
                                 "Detection Finished. Nothing detected");
@@ -377,15 +394,37 @@ public class CameraModel {
                 } catch (Exception e) {
                     exception = String.format(
                             "Detection failed: %s", e.getMessage());
+                    //Toast.makeText(activity, exception, Toast.LENGTH_LONG);
+                    //throw new RuntimeException(e);
                     return null;
                 }
             }
 
+//            @Override
+//            protected void onPreExecute() {
+//                //TODO: show progress dialog
+//                detecProgressDialog.show();
+//            }
+//            @Override
+//            protected void onProgressUpdate(String... progress) {
+//                //TODO: update progress
+//                detecProgressDialog.setMessage(progress[0]);
+//            }
+
+            @RequiresApi(api = Build.VERSION_CODES.M)
             @Override
             protected void onPostExecute(Face[] result) {
                 //TODO: update face frames
+                detecProgressDialog.dismiss();
+                if(!exception.equals("")){
+                    showError(exception);
+                }
+                if (result == null) return;
                 emotionRes = result;
-               createCameraPreview();
+                closeCamera();
+                openCamera();
+                Toast.makeText(activity,getResult("happiness")+" asfasfas", Toast.LENGTH_LONG ).show();
+               //createCameraPreview();
             }
 
 
@@ -412,8 +451,18 @@ public class CameraModel {
 //        } catch (IOException e) {
 //            e.printStackTrace();
 //        }
-        faceThread.execute();
+        faceThread.execute(inputStreams);
 
+    }
+
+    private void showError(String message) {
+        new AlertDialog.Builder(activity)
+                .setTitle("Error")
+                .setMessage(message)
+                .setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                    }})
+                .create().show();
     }
 
     public double getResult(String entry){
