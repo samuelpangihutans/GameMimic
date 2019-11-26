@@ -18,9 +18,7 @@ android {
     }
     sourceSets{
         main{
-            manifest.srcFile{
-                'C:/Users/Ifunk/Desktop/MATKUL SEMS 7/LBW/GameLBW/app/src/main/AndroidManifest.xml'
-            }
+
         }
     }
 }
