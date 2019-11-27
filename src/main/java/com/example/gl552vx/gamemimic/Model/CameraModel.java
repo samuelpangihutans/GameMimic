@@ -446,8 +446,8 @@ public class CameraModel {
                 Log.d("DETEK","Masuk ke OnPost execute");
                  closeCamera();
                  openCamera();
-                Log.d("DETEK","Panjang array "+faces.length);
-                if(faces.length == 0){
+//                Log.d("DETEK","Panjang array "+faces.length);
+                if(faces.length == 0 || faces == null){
                     Log.d("DETEK", "status = error");
                     return;
                 }
@@ -457,14 +457,15 @@ public class CameraModel {
                     String status=getEmo(res);
                     String m=gameLogic.getCurMimic();
                     double temp=getScore(res,m);
+                    int convertTemp = (int) temp;
                     Log.d("DETEK", "status="+status+" "+temp+" "+m);
 
 
-                    score+=temp;
+                    score+=convertTemp;
                     tvScore.setText(""+score);
 
                     gameLogic.generateMimic();
-                    tvMimic.setText(""+gameLogic.getCurMimic());
+                    tvMimic.setText(""+m);
 
 
                 }
