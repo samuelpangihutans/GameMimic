@@ -5,17 +5,10 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
-import android.hardware.camera2.CameraAccessException;
-import android.hardware.camera2.CameraCaptureSession;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Environment;
-import android.provider.MediaStore;
 import android.util.Log;
-import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
@@ -26,16 +19,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.gl552vx.gamemimic.Model.CameraModel;
-
-import com.example.gl552vx.gamemimic.Model.GameManager;
-
 import com.example.gl552vx.gamemimic.R;
-
-
-import java.io.File;
-import java.io.IOException;
-
-import java.util.Arrays;
 
 public class CameraAct extends AppCompatActivity implements View.OnClickListener{
 
@@ -44,7 +28,6 @@ public class CameraAct extends AppCompatActivity implements View.OnClickListener
     private TextView tvScore;
     private Button btnCapture;
     private CameraModel camModel;
-    private GameManager gameManager;
     private Chronometer timer;
   
     TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
