@@ -12,7 +12,9 @@ import android.util.Log;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
+
 import android.widget.Chronometer;
+
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,6 +29,7 @@ public class CameraAct extends AppCompatActivity implements View.OnClickListener
     private Button btnCapture;
     private CameraModel camModel;
     private Chronometer timer;
+  
     TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
         @RequiresApi(api = Build.VERSION_CODES.M)
         @Override
@@ -60,6 +63,10 @@ public class CameraAct extends AppCompatActivity implements View.OnClickListener
         this.tvScore=findViewById(R.id.tv_score);
         this.timer.start();
         camModel = new CameraModel(this, this.textureView,this.tvMimic,this.tvScore);
+
+
+        String mimic=gameLogic.generateMimic();
+        this.tv_mimic.setText(mimic);
 
     }
 
@@ -97,6 +104,8 @@ public class CameraAct extends AppCompatActivity implements View.OnClickListener
     @Override
     public void onClick(View v) {
         this.camModel.takePicture();
+        String mimic=gameLogic.generateMimic();
+        this.tv_mimic.setText(mimic);
     }
 
 

@@ -1,10 +1,12 @@
 package com.example.gl552vx.gamemimic.Model;
 
 
+
 import java.util.Random;
 
 public class GameLogic {
     private String[] mimic;
+
     private int[] counter;
     private Random rand;
     private String curMimic;
@@ -21,6 +23,7 @@ public class GameLogic {
         this.mimic[3]="SEDIH";
         this.mimic[4]="KAGET";
     }
+
 
     public void generateMimic(){
         int number=-1;
@@ -55,3 +58,4 @@ public class GameLogic {
 
 
 }
+
