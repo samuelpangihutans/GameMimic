@@ -3,12 +3,9 @@ package com.example.gl552vx.gamemimic.Model;
 import android.Manifest;
 import android.Manifest.permission;
 import android.app.Activity;
-import android.app.AliasActivity;
-import android.app.ProgressDialog;
-import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
+
 import android.graphics.ImageFormat;
 import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
@@ -36,7 +33,7 @@ import android.util.Size;
 import android.util.SparseIntArray;
 import android.view.Surface;
 import android.view.TextureView;
-import android.widget.Button;
+
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -44,12 +41,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 
-import com.example.gl552vx.gamemimic.View.MainActivity;
 import com.microsoft.projectoxford.face.FaceServiceClient;
 import com.microsoft.projectoxford.face.FaceServiceRestClient;
 import com.microsoft.projectoxford.face.contract.Face;
 
-import org.w3c.dom.Text;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -59,7 +54,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -82,10 +76,9 @@ public class CameraModel {
     private GameLogic gameLogic;
 
     // Add your Face endpoint to your environment variables.
-    private final String apiEndpoint = "https://westcentralus.api.cognitive.microsoft.com/face/v1.0/";
-//            "https://pascalfaceapisandbox.cognitiveservices.azure.com/face/v1.0/";
+    private final String apiEndpoint =   "https://pascalfaceapisandbox.cognitiveservices.azure.com/face/v1.0/";
     // Add your Face subscription key to your environment variables.
-    private final String subscriptionKey = "d8587d3195104833b9d48008f8770a52";
+    private final String subscriptionKey = "85d799141b4746d6827f4ffd52db6375";
     private Face[] emotionRes;
 
     private final FaceServiceClient faceServiceClient = new FaceServiceRestClient(apiEndpoint,subscriptionKey);
