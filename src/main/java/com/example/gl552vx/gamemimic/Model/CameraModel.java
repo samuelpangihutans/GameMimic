@@ -265,9 +265,7 @@ public class CameraModel {
                     @Override
                     public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
                         super.onCaptureCompleted(session, request, result);
-                        gameLogic.generateMimic();
-                        tvMimic.setText(""+gameLogic.getCurMimic());
-                        Toast.makeText(activity, "Saved:" + file, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, "PLEASE WAIT A MOMENT......", Toast.LENGTH_SHORT).show();
                         Log.d("DETEK","kedetek, di ambil buaat jadi bitmap");
                         Uri uri=Uri.fromFile(file);
                         try {
@@ -465,6 +463,9 @@ public class CameraModel {
                     score+=temp;
                     tvScore.setText(""+score);
 
+                    gameLogic.generateMimic();
+                    tvMimic.setText(""+gameLogic.getCurMimic());
+
 
                 }
 
@@ -517,19 +518,19 @@ public class CameraModel {
     private double getScore(Face res,String mimik){
 
         if(mimik.equalsIgnoreCase("MARAH")){
-            return res.faceAttributes.emotion.anger;
+            return res.faceAttributes.emotion.anger*100;
         }
         else if(mimik.equalsIgnoreCase("SENANG")){
-            return res.faceAttributes.emotion.happiness;
+            return res.faceAttributes.emotion.happiness*100;
         }
         else if(mimik.equalsIgnoreCase("TAKUT")){
-            return res.faceAttributes.emotion.fear;
+            return res.faceAttributes.emotion.fear*100;
         }
         else if(mimik.equalsIgnoreCase("KAGET")){
-            return res.faceAttributes.emotion.surprise;
+            return res.faceAttributes.emotion.surprise*100;
         }
         else if(mimik.equalsIgnoreCase("SEDIH")){
-            return res.faceAttributes.emotion.sadness;
+            return res.faceAttributes.emotion.sadness*100;
         }
 
         return 0;
