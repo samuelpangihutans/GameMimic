@@ -6,20 +6,20 @@
     android:layout_height="match_parent"
     tools:context=".View.CameraAct">
 
-
     <TextView
         android:id="@+id/lb_score"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textSize="15dp"
+        android:textSize="20dp"
         android:text="SCORE :" />
 
     <TextView
+
         android:id="@+id/tv_score"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_toRightOf="@id/lb_score"
-        android:textSize="15dp"
+        android:textSize="20dp"
         android:text="TextView" />
 
     <Button
@@ -34,21 +34,31 @@
     <TextureView
         android:id="@+id/textureView"
         android:layout_width="match_parent"
-        android:layout_height="491dp"
-        android:layout_below="@id/lb_score"
-        android:layout_marginTop="28dp" />
+
+        android:layout_height="499dp"
+        android:layout_below="@+id/tv_score"
+        />
+
+    <Chronometer
+        android:id="@+id/count_timer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentEnd="true" />
+
 
     <TextView
         android:id="@+id/mimic"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/textureView"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="57dp"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="37dp"
         android:gravity="center"
-        android:textSize="30dp"
+        android:text="TextView"
         android:textColor="@color/colorPrimaryDark"
-        android:text="TextView" />
+        android:textSize="30dp" />
+
 
 
 </RelativeLayout>

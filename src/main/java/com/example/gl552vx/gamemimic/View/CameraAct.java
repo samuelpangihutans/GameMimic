@@ -5,33 +5,48 @@ import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.util.Log;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
+
+import android.widget.Chronometer;
+
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.gl552vx.gamemimic.Model.CameraModel;
-import com.example.gl552vx.gamemimic.Model.GameLogic;
+
+import com.example.gl552vx.gamemimic.Model.GameManager;
+
 import com.example.gl552vx.gamemimic.R;
+
+
+import java.io.File;
+import java.io.IOException;
 
 import java.util.Arrays;
 
 public class CameraAct extends AppCompatActivity implements View.OnClickListener{
 
     private TextureView textureView;
+    private TextView tvMimic;
+    private TextView tvScore;
     private Button btnCapture;
     private CameraModel camModel;
-    private TextView tv_mimic;
-    private GameLogic gameLogic;
-
+    private GameManager gameManager;
+    private Chronometer timer;
+  
     TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
         @RequiresApi(api = Build.VERSION_CODES.M)
         @Override
@@ -57,12 +72,15 @@ public class CameraAct extends AppCompatActivity implements View.OnClickListener
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_camera);
-        this.gameLogic=new GameLogic();
+        this.timer = findViewById(R.id.count_timer);
         this.btnCapture = findViewById(R.id.btn_capture);
         this.btnCapture.setOnClickListener(this);
         this.textureView = findViewById(R.id.textureView);
-        this.tv_mimic=findViewById(R.id.mimic);
-        camModel = new CameraModel(this, this.textureView);
+        this.tvMimic=findViewById(R.id.mimic);
+        this.tvScore=findViewById(R.id.tv_score);
+        this.timer.start();
+        camModel = new CameraModel(this, this.textureView,this.tvMimic,this.tvScore);
+
 
         String mimic=gameLogic.generateMimic();
         this.tv_mimic.setText(mimic);
@@ -106,4 +124,6 @@ public class CameraAct extends AppCompatActivity implements View.OnClickListener
         String mimic=gameLogic.generateMimic();
         this.tv_mimic.setText(mimic);
     }
+
+
 }

@@ -4,9 +4,13 @@ import android.Manifest;
 import android.Manifest.permission;
 import android.app.Activity;
 import android.app.AliasActivity;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.ImageFormat;
+import android.graphics.Matrix;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -19,12 +23,17 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.net.Uri;
+import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.provider.MediaStore;
+import android.util.Base64;
 import android.util.Log;
 import android.util.Size;
+import android.util.SparseIntArray;
 import android.view.Surface;
 import android.view.TextureView;
 import android.widget.Button;
@@ -36,17 +45,25 @@ import androidx.annotation.RequiresApi;
 import androidx.core.app.ActivityCompat;
 
 import com.example.gl552vx.gamemimic.View.MainActivity;
+import com.microsoft.projectoxford.face.FaceServiceClient;
+import com.microsoft.projectoxford.face.FaceServiceRestClient;
+import com.microsoft.projectoxford.face.contract.Face;
 
 import org.w3c.dom.Text;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 public class CameraModel {
@@ -59,8 +76,19 @@ public class CameraModel {
     private HandlerThread mBackgroundThread;
     private String cameraId;
     private Size imageDimension;
+    private int score;
     private ImageReader imageReader;
     private static final int REQUEST_CAMERA_PERMISSION = 200;
+    private GameLogic gameLogic;
+
+    // Add your Face endpoint to your environment variables.
+    private final String apiEndpoint = "https://westcentralus.api.cognitive.microsoft.com/face/v1.0/";
+//            "https://pascalfaceapisandbox.cognitiveservices.azure.com/face/v1.0/";
+    // Add your Face subscription key to your environment variables.
+    private final String subscriptionKey = "d8587d3195104833b9d48008f8770a52";
+    private Face[] emotionRes;
+
+    private final FaceServiceClient faceServiceClient = new FaceServiceRestClient(apiEndpoint,subscriptionKey);
     private File file;
 
     private final CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
@@ -81,12 +109,25 @@ public class CameraModel {
         }
     };
     private TextureView textureView;
+    private TextView tvMimic;
+    private TextView tvScore;
     //init ends here
 
     //Constructor class
-    public CameraModel(Activity activity, TextureView textureView){
+    public CameraModel(Activity activity, TextureView textureView,TextView tvMimic,TextView tvScore){
         this.activity = activity;
         this.textureView = textureView;
+        this.tvMimic=tvMimic;
+        this.tvScore=tvScore;
+
+        this.gameLogic=new GameLogic();
+        this.gameLogic.generateMimic();
+        tvMimic.setText(""+gameLogic.getCurMimic());
+        tvScore.setText(""+0);
+
+        this.score=0;
+
+
     }
 
     public CameraDevice getmDevice() {
@@ -118,6 +159,30 @@ public class CameraModel {
             e.printStackTrace();
         }
     }
+    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
+    static {
+        ORIENTATIONS.append(Surface.ROTATION_0, 90);
+        ORIENTATIONS.append(Surface.ROTATION_90, 0);
+        ORIENTATIONS.append(Surface.ROTATION_180, 270);
+        ORIENTATIONS.append(Surface.ROTATION_270, 180);
+    }
+
+    /**
+     * Retrieves the JPEG orientation from the specified screen rotation.
+     *
+     * @param rotation The screen rotation.
+     * @return The JPEG orientation (one of 0, 90, 270, and 360)
+     */
+    private int getOrientation(int rotation,int mSensorOrientation) {
+        return (ORIENTATIONS.get(rotation) + mSensorOrientation + 270) % 360;
+    }
+
+    public static Bitmap rotateImage(Bitmap source, float angle) {
+        Matrix matrix = new Matrix();
+        matrix.postRotate(angle);
+        return Bitmap.createBitmap(source, 0, 0, source.getWidth(), source.getHeight(),
+                matrix, true);
+    }
 
     public void takePicture(){
         if(mDevice == null){
@@ -132,10 +197,10 @@ public class CameraModel {
                 if(characteristics != null){
                     jpegSize = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.JPEG);
                 }
-                int width = 480;
-                int height = 640;
+                int width = 640;
+                int height = 480;
 
-                if(jpegSize != null && 0 < jpegSize.length){
+                if(jpegSize != null && jpegSize.length >0){
                     width = jpegSize[0].getWidth();
                     height = jpegSize[0].getHeight();
                 }
@@ -145,15 +210,23 @@ public class CameraModel {
                 List<Surface> outputSurfaces = new ArrayList<Surface>(2);
                 outputSurfaces.add(reader.getSurface());
                 outputSurfaces.add(new Surface(textureView.getSurfaceTexture()));
+
                 final CaptureRequest.Builder captureBuilder = mDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
                 captureBuilder.addTarget(reader.getSurface());
-                //captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
-                captureBuilder.set(
-                        CaptureRequest.JPEG_ORIENTATION,
-                       270);
-               // activity.getWindowManager().getDefaultDisplay().getRotation();
-               // sensorOrientation =  characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+                captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
+
+                int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
+
+                 int sensorOrientation =  characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
+               // Log.d("DETEK","rotasinya = "+rotation);
+
+                //captureBuilder.set(CaptureRequest.JPEG_ORIENTATION,ORIENTATIONS.get(rotation));
+                Log.d("DETEK","Device orientation = "+activity.getWindowManager().getDefaultDisplay().getRotation() );
+               captureBuilder.set(CaptureRequest.JPEG_ORIENTATION,getJpegOrientation(characteristics,activity.getWindowManager().getDefaultDisplay().getRotation())+20);
+                //captureRequestBuilder.set(CaptureRequest.JPEG_ORIENTATION, getOrientation(270,sensorOrientation));
+                //captureBuilder.set(CaptureRequest.JPEG_ORIENTATION,ORIENTATIONS.indexOfValue(0));
                 file = new File(Environment.getExternalStorageDirectory()+"/pic.jpg");
+
                 ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
                     @Override
                     public void onImageAvailable(ImageReader imageReader) {
@@ -174,7 +247,6 @@ public class CameraModel {
                             }
                         }
                     }
-
                     private void save(byte[] bytes) throws IOException {
                         OutputStream output = null;
                         try {
@@ -193,7 +265,18 @@ public class CameraModel {
                     @Override
                     public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
                         super.onCaptureCompleted(session, request, result);
-                        Toast.makeText(activity, "Saved:" + file, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(activity, "PLEASE WAIT A MOMENT......", Toast.LENGTH_SHORT).show();
+                        Log.d("DETEK","kedetek, di ambil buaat jadi bitmap");
+                        Uri uri=Uri.fromFile(file);
+                        try {
+                            Bitmap bitmap = MediaStore.Images.Media.getBitmap(activity.getContentResolver(), uri);
+                            Log.d("DETEK", "Rotatitinh");
+                            bitmap = rotateImage(bitmap, 270);
+                            detectEmotion(bitmap);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
                         createCameraPreview();
                     }
                 };
@@ -265,6 +348,8 @@ public class CameraModel {
     public void openCamera() {
         CameraManager manager = (CameraManager) this.activity.getSystemService(this.activity.CAMERA_SERVICE);
         Log.e("d", "is camera open");
+        gameLogic.generateMimic();
+
         try {
             cameraId = manager.getCameraIdList()[1];
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
@@ -311,5 +396,146 @@ public class CameraModel {
 
         return jpegOrientation;
     }
+
+
+    public void detectEmotion(final Bitmap imageBitmap) {
+        Log.d("DETEK","Gambar lagi di terjemahin ke byte gens");
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        imageBitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+        ByteArrayInputStream inputStream =
+                new ByteArrayInputStream(outputStream.toByteArray());
+
+        AsyncTask<InputStream,String, Face[]> faceThread = new AsyncTask<InputStream, String, Face[]>() {
+            String exception ="";
+            @Override
+            protected Face[] doInBackground(InputStream... inputStreams) {
+                try {
+                    publishProgress("Detecting...");
+                    Face[] result = faceServiceClient.detect(
+                            inputStreams[0],
+                            true,         // returnFaceId
+                            false,        // returnFaceLandmarks
+                            new FaceServiceClient.FaceAttributeType[]{FaceServiceRestClient.FaceAttributeType.Emotion}  // returnFaceAttributes:
+                                    /* new FaceServiceClient.FaceAttributeType[] {
+                                        FaceServiceClient.FaceAttributeType.Age,
+                                        FaceServiceClient.FaceAttributeType.Gender }
+                                    */
+                    );
+                    Log.d("DETEK","kedetek WOIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII");
+                    if (result == null){
+                        Log.d("UNDETECTED","2.2");
+
+                        publishProgress(
+
+                                "Detection Finished. Nothing detected");
+                        return null;
+                    }
+                    publishProgress(String.format(
+                            "Detection Finished. %d face(s) detected",
+                            result.length));
+                    return result;
+                } catch (Exception e) {
+                    exception = String.format(
+                            "Detection failed: %s", e.getMessage());
+                    return null;
+                }
+            }
+
+            @Override
+            protected void onPostExecute(Face[] faces) {
+                Log.d("DETEK","Masuk ke OnPost execute");
+                 closeCamera();
+                 openCamera();
+//                Log.d("DETEK","Panjang array "+faces.length);
+                if(faces.length == 0 || faces == null){
+                    Log.d("DETEK", "status = error");
+                    return;
+                }
+
+
+                for(Face res : faces){
+                    String status=getEmo(res);
+                    String m=gameLogic.getCurMimic();
+                    double temp=getScore(res,m);
+                    int convertTemp = (int) temp;
+                    Log.d("DETEK", "status="+status+" "+temp+" "+m);
+
+
+                    score+=convertTemp;
+                    tvScore.setText(""+score);
+
+                    gameLogic.generateMimic();
+                    tvMimic.setText(""+m);
+
+
+                }
+
+            }
+
+        };
+        faceThread.execute(inputStream);
+    }
+
+    private String getEmo(Face res){
+        Log.d("DETEK","muka di periksa gens");
+        List<Double> list=new ArrayList<>();
+
+        list.add(res.faceAttributes.emotion.anger);
+        list.add(res.faceAttributes.emotion.happiness);
+        list.add(res.faceAttributes.emotion.contempt);
+        list.add(res.faceAttributes.emotion.disgust);
+        list.add(res.faceAttributes.emotion.fear);
+        list.add(res.faceAttributes.emotion.neutral);
+        list.add(res.faceAttributes.emotion.sadness);
+        list.add(res.faceAttributes.emotion.surprise);
+
+        Collections.sort(list);
+
+        double maxNum=list.get(list.size()-1);
+        if(maxNum==res.faceAttributes.emotion.anger){
+            return "Anger";
+        }
+        else if(maxNum==res.faceAttributes.emotion.happiness){
+            return "Happy";
+        }else if(maxNum==res.faceAttributes.emotion.contempt){
+            return "Contemp";
+        }else if(maxNum==res.faceAttributes.emotion.disgust){
+            return "Disgust";
+        }else if(maxNum==res.faceAttributes.emotion.fear){
+            return "Fear";
+        }else if(maxNum==res.faceAttributes.emotion.neutral){
+            return "Neutral";
+        }else if(maxNum==res.faceAttributes.emotion.sadness){
+            return "Sadness";
+        }else if(maxNum==res.faceAttributes.emotion.surprise){
+            return "Surprise";
+        }
+        else{
+            return "Neutral";
+        }
+
+    }
+
+    private double getScore(Face res,String mimik){
+
+        if(mimik.equalsIgnoreCase("MARAH")){
+            return res.faceAttributes.emotion.anger*100;
+        }
+        else if(mimik.equalsIgnoreCase("SENANG")){
+            return res.faceAttributes.emotion.happiness*100;
+        }
+        else if(mimik.equalsIgnoreCase("TAKUT")){
+            return res.faceAttributes.emotion.fear*100;
+        }
+        else if(mimik.equalsIgnoreCase("KAGET")){
+            return res.faceAttributes.emotion.surprise*100;
+        }
+        else if(mimik.equalsIgnoreCase("SEDIH")){
+            return res.faceAttributes.emotion.sadness*100;
+        }
+
+        return 0;
+    }
+
 
 }
