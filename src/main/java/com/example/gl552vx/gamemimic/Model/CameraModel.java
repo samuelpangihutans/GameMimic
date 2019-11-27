@@ -76,7 +76,7 @@ public class CameraModel {
     private HandlerThread mBackgroundThread;
     private String cameraId;
     private Size imageDimension;
-    private double score;
+    private int score;
     private ImageReader imageReader;
     private static final int REQUEST_CAMERA_PERMISSION = 200;
     private GameLogic gameLogic;
