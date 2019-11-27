@@ -103,9 +103,7 @@ public class CameraAct extends AppCompatActivity implements View.OnClickListener
 
     @Override
     public void onClick(View v) {
-
         this.camModel.takePicture();
-
     }
 
 
