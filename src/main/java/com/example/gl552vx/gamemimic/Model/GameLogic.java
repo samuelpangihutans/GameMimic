@@ -33,10 +33,12 @@ public class GameLogic {
             this.curMimic=this.mimic[number];
         }
         else {
-            number = rand.nextInt(5);
-            while (this.counter[0]==number) {
-                number = rand.nextInt(5);
+            if(this.counter[0]==number){
+                while (this.counter[0]==number) {
+                    number = rand.nextInt(5);
+                }
             }
+
             this.curMimic=this.mimic[number];
         }
 

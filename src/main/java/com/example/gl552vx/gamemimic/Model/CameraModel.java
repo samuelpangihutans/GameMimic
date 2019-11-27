@@ -76,9 +76,9 @@ public class CameraModel {
     private GameLogic gameLogic;
 
     // Add your Face endpoint to your environment variables.
-    private final String apiEndpoint =   "https://pascalfaceapisandbox.cognitiveservices.azure.com/face/v1.0/";
+    private final String apiEndpoint =   "https://westcentralus.api.cognitive.microsoft.com/face/v1.0/";
     // Add your Face subscription key to your environment variables.
-    private final String subscriptionKey = "85d799141b4746d6827f4ffd52db6375";
+    private final String subscriptionKey = "d8587d3195104833b9d48008f8770a52";
     private Face[] emotionRes;
 
     private final FaceServiceClient faceServiceClient = new FaceServiceRestClient(apiEndpoint,subscriptionKey);
@@ -114,8 +114,6 @@ public class CameraModel {
         this.tvScore=tvScore;
 
         this.gameLogic=new GameLogic();
-        this.gameLogic.generateMimic();
-        tvMimic.setText(""+gameLogic.getCurMimic());
         tvScore.setText(""+0);
 
         this.score=0;
@@ -342,7 +340,7 @@ public class CameraModel {
         CameraManager manager = (CameraManager) this.activity.getSystemService(this.activity.CAMERA_SERVICE);
         Log.e("d", "is camera open");
         gameLogic.generateMimic();
-
+        tvMimic.setText(""+gameLogic.getCurMimic());
         try {
             cameraId = manager.getCameraIdList()[1];
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
@@ -437,8 +435,8 @@ public class CameraModel {
             @Override
             protected void onPostExecute(Face[] faces) {
                 Log.d("DETEK","Masuk ke OnPost execute");
-                 closeCamera();
-                 openCamera();
+               //  closeCamera();
+              //   openCamera();
 //                Log.d("DETEK","Panjang array "+faces.length);
                 if(faces.length == 0 || faces == null){
                     Log.d("DETEK", "status = error");
@@ -457,9 +455,9 @@ public class CameraModel {
                     score+=convertTemp;
                     tvScore.setText(""+score);
 
-                    gameLogic.generateMimic();
-                    tvMimic.setText(""+m);
 
+                    gameLogic.generateMimic();
+                    tvMimic.setText(""+gameLogic.getCurMimic());
 
                 }
 

@@ -65,9 +65,6 @@ public class CameraAct extends AppCompatActivity implements View.OnClickListener
         camModel = new CameraModel(this, this.textureView,this.tvMimic,this.tvScore);
 
 
-        String mimic=gameLogic.generateMimic();
-        this.tv_mimic.setText(mimic);
-
     }
 
 
@@ -104,8 +101,6 @@ public class CameraAct extends AppCompatActivity implements View.OnClickListener
     @Override
     public void onClick(View v) {
         this.camModel.takePicture();
-        String mimic=gameLogic.generateMimic();
-        this.tv_mimic.setText(mimic);
     }
 
 
