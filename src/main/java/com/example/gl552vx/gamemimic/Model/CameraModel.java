@@ -76,9 +76,10 @@ public class CameraModel {
     private HandlerThread mBackgroundThread;
     private String cameraId;
     private Size imageDimension;
+    private double score;
     private ImageReader imageReader;
     private static final int REQUEST_CAMERA_PERMISSION = 200;
-
+    private GameLogic gameLogic;
 
     // Add your Face endpoint to your environment variables.
     private final String apiEndpoint = "https://westcentralus.api.cognitive.microsoft.com/face/v1.0/";
@@ -108,12 +109,24 @@ public class CameraModel {
         }
     };
     private TextureView textureView;
+    private TextView tvMimic;
+    private TextView tvScore;
     //init ends here
 
     //Constructor class
-    public CameraModel(Activity activity, TextureView textureView){
+    public CameraModel(Activity activity, TextureView textureView,TextView tvMimic,TextView tvScore){
         this.activity = activity;
         this.textureView = textureView;
+        this.tvMimic=tvMimic;
+        this.tvScore=tvScore;
+
+        this.gameLogic=new GameLogic();
+        this.gameLogic.generateMimic();
+        tvMimic.setText(""+gameLogic.getCurMimic());
+        tvScore.setText(""+0);
+
+        this.score=0;
+
 
     }
 
@@ -252,6 +265,8 @@ public class CameraModel {
                     @Override
                     public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
                         super.onCaptureCompleted(session, request, result);
+                        gameLogic.generateMimic();
+                        tvMimic.setText(""+gameLogic.getCurMimic());
                         Toast.makeText(activity, "Saved:" + file, Toast.LENGTH_SHORT).show();
                         Log.d("DETEK","kedetek, di ambil buaat jadi bitmap");
                         Uri uri=Uri.fromFile(file);
@@ -335,6 +350,8 @@ public class CameraModel {
     public void openCamera() {
         CameraManager manager = (CameraManager) this.activity.getSystemService(this.activity.CAMERA_SERVICE);
         Log.e("d", "is camera open");
+        gameLogic.generateMimic();
+
         try {
             cameraId = manager.getCameraIdList()[1];
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
@@ -440,7 +457,15 @@ public class CameraModel {
 
                 for(Face res : faces){
                     String status=getEmo(res);
-                    Log.d("DETEK", "status="+status);
+                    String m=gameLogic.getCurMimic();
+                    double temp=getScore(res,m);
+                    Log.d("DETEK", "status="+status+" "+temp+" "+m);
+
+
+                    score+=temp;
+                    tvScore.setText(""+score);
+
+
                 }
 
             }
@@ -488,5 +513,27 @@ public class CameraModel {
         }
 
     }
+
+    private double getScore(Face res,String mimik){
+
+        if(mimik.equalsIgnoreCase("MARAH")){
+            return res.faceAttributes.emotion.anger;
+        }
+        else if(mimik.equalsIgnoreCase("SENANG")){
+            return res.faceAttributes.emotion.happiness;
+        }
+        else if(mimik.equalsIgnoreCase("TAKUT")){
+            return res.faceAttributes.emotion.fear;
+        }
+        else if(mimik.equalsIgnoreCase("KAGET")){
+            return res.faceAttributes.emotion.surprise;
+        }
+        else if(mimik.equalsIgnoreCase("SEDIH")){
+            return res.faceAttributes.emotion.sadness;
+        }
+
+        return 0;
+    }
+
 
 }

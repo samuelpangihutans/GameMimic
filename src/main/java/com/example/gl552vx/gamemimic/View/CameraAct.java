@@ -19,6 +19,7 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.gl552vx.gamemimic.Model.CameraModel;
@@ -34,6 +35,8 @@ import java.util.Arrays;
 public class CameraAct extends AppCompatActivity implements View.OnClickListener{
 
     private TextureView textureView;
+    private TextView tvMimic;
+    private TextView tvScore;
     private Button btnCapture;
     private CameraModel camModel;
     private GameManager gameManager;
@@ -66,7 +69,9 @@ public class CameraAct extends AppCompatActivity implements View.OnClickListener
         this.btnCapture = findViewById(R.id.btn_capture);
         this.btnCapture.setOnClickListener(this);
         this.textureView = findViewById(R.id.textureView);
-        camModel = new CameraModel(this, this.textureView);
+        this.tvMimic=findViewById(R.id.mimic);
+        this.tvScore=findViewById(R.id.tv_score);
+        camModel = new CameraModel(this, this.textureView,this.tvMimic,this.tvScore);
 
     }
 

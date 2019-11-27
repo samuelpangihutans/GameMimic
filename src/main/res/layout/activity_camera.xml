@@ -6,11 +6,20 @@
     android:layout_height="match_parent"
     tools:context=".View.CameraAct">
 
+    <TextView
+        android:id="@+id/lb_score"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="20dp"
+        android:text="SCORE :" />
 
-    <TextureView
-        android:id="@+id/textureView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+    <TextView
+        android:id="@+id/tv_score"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@id/lb_score"
+        android:textSize="20dp"
+        android:text="TextView" />
 
     <Button
         android:id="@+id/btn_capture"
@@ -20,6 +29,26 @@
         android:layout_centerHorizontal="true"
         android:layout_marginBottom="11dp"
         android:text="@string/capture_string" />
+
+    <TextureView
+        android:id="@+id/textureView"
+        android:layout_width="match_parent"
+        android:layout_height="499dp"
+        android:layout_below="@+id/tv_score"
+        />
+
+
+    <TextView
+        android:id="@+id/mimic"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/textureView"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="57dp"
+        android:gravity="center"
+        android:textSize="30dp"
+        android:textColor="@color/colorPrimaryDark"
+        android:text="TextView" />
 
 
 </RelativeLayout>
