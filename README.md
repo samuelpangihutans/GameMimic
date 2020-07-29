@@ -1,6 +1,6 @@
 # Game mimik wajah
 
-## Proposal
+## Deskripsi
 
 Game ini memanfaatkan microsoft face API untuk menentukan ekspresi pemain.
 Game ini terdiri dari satu pemain yang dimana pemain harus mengekspresikan dirinya
@@ -10,13 +10,13 @@ Score akan dihutung berdasarkan seberapa akurat mimik wajah yang ditunjukan oleh
 dan seberapa cepat pemain menyelesaikan game tersebut.
 
 Game yang akan kami bangun merupakan game berbasis andorid, dengan menggunakan bahasa pemrograman java.
-parameter yang nantinya digunakan sebagai penilain didapatkan dari microsoft face API, yang
+parameter yang digunakan sebagai penilain didapatkan dari microsoft face API, yang
 kemudian diolah dengan menggunakan perhitungan matematis.
 
-## Masukan untuk Proposal
 
-OK. Saya setujui. Sepertinya akan banyak yang dikerjakan, jadi silakan segera dimulai saja.
 
-## Lain-lain
+## Dibuat Oleh : 
 
-_Silakan mengisi README.md sesuai kebutuhan kelompok Anda mulai dari sini._
+- Samuel Pangihutan Sihombing
+- Gabriel
+- Ivan Kurniawan
